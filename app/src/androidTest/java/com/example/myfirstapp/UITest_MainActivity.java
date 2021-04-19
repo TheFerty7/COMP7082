@@ -9,8 +9,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-//import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.Espresso.onView;
+import static androidx.test.espresso.action.ViewActions.clearText;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.typeText;
@@ -20,14 +20,18 @@ import static androidx.test.espresso.matcher.ViewMatchers.withText;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class UITest2 {
+public class UITest_MainActivity {
     @Rule
     public ActivityTestRule<MainActivity> activityRule =
             new ActivityTestRule<>(MainActivity.class);
 
     @Test
-    public void listGoesOverTheFold() {
-
+    public void changeCaption() {
+        onView(withId(R.id.etCaption)).perform(clearText());
+        onView(withId(R.id.etCaption)).perform(typeText("This is a Test"), closeSoftKeyboard());
+        onView(withId(R.id.btnNext)).perform(click());
+        onView(withId(R.id.btnPrev)).perform(click());
+        onView(withId(R.id.etCaption)).check(matches(withText("This is a Test")));
     }
 
 }
