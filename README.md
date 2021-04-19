@@ -1,0 +1,2 @@
+# COMP7082
+COMP 7082 Photo App
