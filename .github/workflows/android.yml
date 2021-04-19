@@ -8,7 +8,7 @@ on:
 jobs:
   build:
 
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -23,11 +23,3 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
       
-    - name: Run Instrumentation Tests (reactivecircus)
-      uses: ReactiveCircus/android-emulator-runner@v2.15.0
-      with:
-        api-level: 30
-        target: default
-        arch: x86
-        profile: Nexus 6
-        script: ./gradlew connectedCheck --stacktrace
