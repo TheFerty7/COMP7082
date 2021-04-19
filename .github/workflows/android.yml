@@ -22,3 +22,12 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+      
+    - name: Run Instrumentation Tests (reactivecircus)
+      uses: ReactiveCircus/android-emulator-runner@v2.15.0
+      with:
+        api-level: 30
+        target: default
+        arch: x86
+        profile: Pixel 3
+        script: ./gradlew connectedCheck --stacktrace
