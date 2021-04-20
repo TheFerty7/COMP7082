@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
 import android.media.Image;
 import android.net.Uri;
@@ -28,6 +29,7 @@ import static android.provider.AlarmClock.EXTRA_MESSAGE;
 public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "com.example.myfirstapp.MESSAGE";
     static final int REQUEST_IMAGE_CAPTURE = 1;
+    static final int SEARCH_ACTIVITY_REQUEST_CODE = 2;
     String currentPhotoPath;
     private ArrayList<String> photos = null;
     private int index = 0;
@@ -37,7 +39,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        photos = findPhotos();
+        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
+
         if (photos.size() == 0) {
             displayPhoto(null);
         } else {
@@ -45,13 +48,50 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void searchPhoto(View view) {
+        Intent intent = new Intent(this, SearchActivity.class);
+        startActivityForResult(intent, SEARCH_ACTIVITY_REQUEST_CODE);
+    }
+
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
+//            ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
+//            mImageView.setImageBitmap(BitmapFactory.decodeFile(currentPhotoPath));
+//            photos = findPhotos();
+//        }
+//    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SEARCH_ACTIVITY_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                DateFormat format = new SimpleDateFormat("yyyy‐MM‐dd HH:mm:ss");
+                Date startTimestamp , endTimestamp;
+                try {
+                    String from = (String) data.getStringExtra("STARTTIMESTAMP");
+                    String to = (String) data.getStringExtra("ENDTIMESTAMP");
+                    startTimestamp = format.parse(from);
+                    endTimestamp = format.parse(to);
+                } catch (Exception ex) {
+                    startTimestamp = null;
+                    endTimestamp = null;
+                }
+                String keywords = (String) data.getStringExtra("KEYWORDS");
+                index = 0;
+                photos = findPhotos(startTimestamp, endTimestamp, keywords);
+                if (photos.size() == 0) {
+                    displayPhoto(null);
+                } else {
+                    displayPhoto(photos.get(index));
+                }
+            }
+        }
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
             mImageView.setImageBitmap(BitmapFactory.decodeFile(currentPhotoPath));
-            photos = findPhotos();
+            photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
         }
     }
 
@@ -90,13 +130,29 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
-    private ArrayList<String> findPhotos() {
-        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
+//    private ArrayList<String> findPhotos() {
+//        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
+//        ArrayList<String> photos = new ArrayList<String>();
+//        File[] fList = file.listFiles();
+//        if (fList != null) {
+//            for (File f : fList) {
+//                photos.add(f.getPath());
+//            }
+//        }
+//        return photos;
+//    }
+
+    private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords) {
+        File file = new File(Environment.getExternalStorageDirectory()
+                .getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
         ArrayList<String> photos = new ArrayList<String>();
         File[] fList = file.listFiles();
         if (fList != null) {
             for (File f : fList) {
-                photos.add(f.getPath());
+                if (((startTimestamp == null && endTimestamp == null) || (f.lastModified() >= startTimestamp.getTime()
+                        && f.lastModified() <= endTimestamp.getTime())
+                ) && (keywords == "" || f.getPath().contains(keywords)))
+                    photos.add(f.getPath());
             }
         }
         return photos;
@@ -104,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void scrollPhotos(View v) {
         updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
-        photos = findPhotos();
+        photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
         switch (v.getId()) {
             case R.id.btnPrev:
                 if (index > 0) {
