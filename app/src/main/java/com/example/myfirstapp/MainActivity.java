@@ -13,14 +13,18 @@ import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.material.textfield.TextInputLayout;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -51,6 +55,25 @@ public class MainActivity extends AppCompatActivity {
     public void searchPhoto(View view) {
         Intent intent = new Intent(this, SearchActivity.class);
         startActivityForResult(intent, SEARCH_ACTIVITY_REQUEST_CODE);
+    }
+
+    public void sharePhoto(View view){
+        try {
+            Uri imageUri = FileProvider.getUriForFile(
+                    MainActivity.this,
+                    "com.example.myfirstapp.fileprovider", //(use your app signature + ".provider" )
+                    new File(photos.get(index)));
+            Intent intent = new Intent(Intent.ACTION_SEND);
+            TextInputLayout caption = findViewById(R.id.tvCaption);
+            intent.putExtra(Intent.EXTRA_TEXT, caption.getEditText().getText());
+            intent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            intent.setType("image/jpeg");
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(intent);
+
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
     }
 
 //    @Override
@@ -197,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
     private void updatePhoto(String path, String caption) {
         String[] attr = path.split("_");
         if (attr.length >= 3) {
-            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3]);
+            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3] + ".jpeg");
             File from = new File(path);
             from.renameTo(to);
         }
