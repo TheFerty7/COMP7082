@@ -47,6 +47,22 @@
             android:layout_marginTop="10dp"
             app:layout_constraintTop_toBottomOf="@+id/tvCaption" />
 
+        <TextView
+            android:id="@+id/tvLat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Latitute: "
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/tvTimestamp" />
+
+        <TextView
+            android:id="@+id/tvLong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Longitute: "
+            android:layout_marginTop="10dp"
+            app:layout_constraintTop_toBottomOf="@+id/tvLat" />
+
         <LinearLayout
             android:id="@+id/circleButtonWrapper"
             android:layout_width="match_parent"
@@ -54,7 +70,7 @@
             android:orientation="horizontal"
             android:gravity="center_horizontal"
             android:layout_marginTop="30dp"
-            app:layout_constraintTop_toBottomOf="@+id/tvTimestamp">
+            app:layout_constraintTop_toBottomOf="@+id/tvLong">
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btnPrev"
@@ -97,6 +113,15 @@
             android:text="search"
             android:layout_marginTop="20dp"
             app:layout_constraintTop_toBottomOf="@+id/circleButtonWrapper"/>
+
+        <Button
+            android:id="@+id/btnLocation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:onClick="searchPhoto"
+            android:text="Location"
+            android:layout_marginTop="2dp"/>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

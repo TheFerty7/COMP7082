@@ -1,28 +1,45 @@
 package com.example.myfirstapp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Locale;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
@@ -34,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> photos = null;
     private int index = 0;
 
+    private FusedLocationProviderClient fusedLocationClient;
+    private Button buttonLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +60,53 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
 
+        // Initialize fusedLocationProviderClient
+        buttonLocation = findViewById(R.id.btnLocation);
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+
+        buttonLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getLocation();
+            }
+        });
+
         if (photos.size() == 0) {
             displayPhoto(null);
         } else {
             displayPhoto(photos.get(index));
         }
     }
+
+    // Gets the location
+    private void getLocation() {
+        // Check the permissions first
+        if (ActivityCompat.checkSelfPermission(MainActivity.this
+                , Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(MainActivity.this
+                , Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // Permission Granted
+            fusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                @Override
+                public void onComplete(@NonNull Task<Location> task) {
+                    Location location = task.getResult();
+
+                    if (location != null) {
+                        TextView lat = (TextView) findViewById(R.id.tvLat);
+                        TextView longit = (TextView) findViewById(R.id.tvLong);
+
+                        lat.setText(String.valueOf(location.getLatitude()));
+                        longit.setText(String.valueOf(location.getLongitude()));
+                    }
+                }
+            });
+        } else {
+            // Permission Denied
+            ActivityCompat.requestPermissions(MainActivity.this
+                    , new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 44);
+        }
+    }
+
 
     public void searchPhoto(View view) {
         Intent intent = new Intent(this, SearchActivity.class);
