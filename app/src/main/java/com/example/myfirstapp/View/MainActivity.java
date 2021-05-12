@@ -100,26 +100,20 @@ public class MainActivity extends AppCompatActivity {
             if (isLocationEnabled()) {
 
                 // getting location
-                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        Location location = task.getResult();
-                        if (location == null) {
-                            requestNewLocationData();
-                        } else {
-                            try {
-                                Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                mFusedLocationClient.getLastLocation().addOnCompleteListener(task -> {
+                    Location location = task.getResult();
+                    if (location == null) {
+                        requestNewLocationData();
+                    } else {
+                        try {
+                            // get geocode and address values
+                            Geocoder geocoder = mainActivityPresenter.getGeocodeInformation(MainActivity.this);
+                            List<Address> addresses = mainActivityPresenter.getLocationInformation(geocoder, location);
 
-                                List<Address> addresses = geocoder.getFromLocation(
-                                        location.getLatitude(), location.getLongitude(), 1
-                                );
-
-                                latitudeTextView.setText("Latitude: " + String.valueOf(addresses.get(0).getLatitude()).substring(0, 8) + "");
-                                longitTextView.setText("Longitude: " + String.valueOf(addresses.get(0).getLongitude()).substring(0, 8) + "");
-                                locationTextView.setText("Location: " + addresses.get(0).getAddressLine(0) + "");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            // sets the location
+                            mainActivityPresenter.setLocationInformation(addresses, latitudeTextView, longitTextView, locationTextView);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 });
@@ -340,13 +334,4 @@ public class MainActivity extends AppCompatActivity {
             tv.setText(attr[2]);
         }
     }
-
-//    private void updatePhoto(String path, String caption) {
-//        String[] attr = path.split("_");
-//        if (attr.length >= 3) {
-//            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3] + ".jpeg");
-//            File from = new File(path);
-//            from.renameTo(to);
-//        }
-//    }
 }
