@@ -1,10 +1,13 @@
-package com.example.myfirstapp;
+package com.example.myfirstapp.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.EditText;
+
+import com.example.myfirstapp.R;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;

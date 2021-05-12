@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.example.myfirstapp.View.MainActivity;
+
 public class DisplayMessageActivity extends AppCompatActivity {
 
     @Override

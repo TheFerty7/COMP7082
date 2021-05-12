@@ -1,27 +1,24 @@
-package com.example.myfirstapp;
+package com.example.myfirstapp.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.FileProvider;
 
-import android.content.ActivityNotFoundException;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
 import android.location.Address;
 import android.location.Geocoder;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.myfirstapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.material.textfield.TextInputLayout;
@@ -46,12 +43,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
-
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
+import com.example.myfirstapp.Presenter.MainActivityPresenter;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,10 +60,11 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> photos = null;
     private int index = 0;
 
+    // MVP Activity
+    private MainActivityPresenter mainActivityPresenter;
 
+    // Location Client Information
     FusedLocationProviderClient mFusedLocationClient;
-
-    // from layout file
     TextView latitudeTextView, longitTextView, locationTextView;
     int PERMISSION_ID = 44;
 
@@ -90,6 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
         // method to get the location
         getLastLocation();
+
+        mainActivityPresenter = new MainActivityPresenter();
     }
 
     @SuppressLint("MissingPermission")
@@ -221,15 +222,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-//            ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
-//            mImageView.setImageBitmap(BitmapFactory.decodeFile(currentPhotoPath));
-//            photos = findPhotos();
-//        }
-//    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -298,18 +290,6 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
-//    private ArrayList<String> findPhotos() {
-//        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
-//        ArrayList<String> photos = new ArrayList<String>();
-//        File[] fList = file.listFiles();
-//        if (fList != null) {
-//            for (File f : fList) {
-//                photos.add(f.getPath());
-//            }
-//        }
-//        return photos;
-//    }
-
     private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords) {
         File file = new File(Environment.getExternalStorageDirectory()
                 .getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
@@ -327,7 +307,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void scrollPhotos(View v) {
-        updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
+        mainActivityPresenter.updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
         photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
         switch (v.getId()) {
             case R.id.btnPrev:
@@ -362,13 +342,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updatePhoto(String path, String caption) {
-        String[] attr = path.split("_");
-        if (attr.length >= 3) {
-            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3] + ".jpeg");
-            File from = new File(path);
-            from.renameTo(to);
-        }
-    }
-
+//    private void updatePhoto(String path, String caption) {
+//        String[] attr = path.split("_");
+//        if (attr.length >= 3) {
+//            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3] + ".jpeg");
+//            File from = new File(path);
+//            from.renameTo(to);
+//        }
+//    }
 }
