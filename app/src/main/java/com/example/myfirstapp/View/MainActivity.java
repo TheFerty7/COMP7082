@@ -196,6 +196,11 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public Boolean checkCaption(){
+        String cap = ((EditText)findViewById(R.id.etCaption)).getText().toString();
+        return true;
+    }
+
     public void searchPhoto(View view) {
         Intent intent = new Intent(this, SearchActivity.class);
         startActivityForResult(intent, SEARCH_ACTIVITY_REQUEST_CODE);
