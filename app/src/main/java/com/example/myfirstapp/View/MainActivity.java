@@ -1,57 +1,53 @@
-package com.example.myfirstapp;
+package com.example.myfirstapp.View;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-
-import android.content.ActivityNotFoundException;
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
+import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.icu.text.DateFormat;
 import android.icu.text.SimpleDateFormat;
 import android.location.Address;
 import android.location.Geocoder;
-import android.media.Image;
+import android.location.Location;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.ContactsContract;
+import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
+
+import com.example.myfirstapp.Presenter.MainActivityPresenter;
+import com.example.myfirstapp.R;
 import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-
-import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.Context;
-import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
-import android.os.Looper;
-import android.provider.Settings;
-import android.widget.Toast;
-
-import androidx.annotation.NonNull;
-import androidx.core.app.ActivityCompat;
-
-
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import java.util.Objects;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,10 +58,11 @@ public class MainActivity extends AppCompatActivity {
     private ArrayList<String> photos = null;
     private int index = 0;
 
+    // MVP Activity
+    private MainActivityPresenter mainActivityPresenter;
 
+    // Location Client Information
     FusedLocationProviderClient mFusedLocationClient;
-
-    // from layout file
     TextView latitudeTextView, longitTextView, locationTextView;
     int PERMISSION_ID = 44;
 
@@ -90,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
 
         // method to get the location
         getLastLocation();
+
+        mainActivityPresenter = new MainActivityPresenter();
     }
 
     @SuppressLint("MissingPermission")
@@ -101,26 +100,20 @@ public class MainActivity extends AppCompatActivity {
             if (isLocationEnabled()) {
 
                 // getting location
-                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        Location location = task.getResult();
-                        if (location == null) {
-                            requestNewLocationData();
-                        } else {
-                            try {
-                                Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+                mFusedLocationClient.getLastLocation().addOnCompleteListener(task -> {
+                    Location location = task.getResult();
+                    if (location == null) {
+                        requestNewLocationData();
+                    } else {
+                        try {
+                            // get geocode and address values
+                            Geocoder geocoder = mainActivityPresenter.getGeocodeInformation(MainActivity.this);
+                            List<Address> addresses = mainActivityPresenter.getLocationInformation(geocoder, location);
 
-                                List<Address> addresses = geocoder.getFromLocation(
-                                        location.getLatitude(), location.getLongitude(), 1
-                                );
-
-                                latitudeTextView.setText("Latitude: " + String.valueOf(addresses.get(0).getLatitude()).substring(0, 8) + "");
-                                longitTextView.setText("Longitude: " + String.valueOf(addresses.get(0).getLongitude()).substring(0, 8) + "");
-                                locationTextView.setText("Location: " + addresses.get(0).getAddressLine(0) + "");
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
+                            // sets the location
+                            mainActivityPresenter.setLocationInformation(addresses, latitudeTextView, longitTextView, locationTextView);
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
                     }
                 });
@@ -221,15 +214,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    @Override
-//    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        super.onActivityResult(requestCode, resultCode, data);
-//        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-//            ImageView mImageView = (ImageView) findViewById(R.id.ivGallery);
-//            mImageView.setImageBitmap(BitmapFactory.decodeFile(currentPhotoPath));
-//            photos = findPhotos();
-//        }
-//    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -298,36 +282,25 @@ public class MainActivity extends AppCompatActivity {
         return image;
     }
 
-//    private ArrayList<String> findPhotos() {
-//        File file = new File(Environment.getExternalStorageDirectory().getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
-//        ArrayList<String> photos = new ArrayList<String>();
-//        File[] fList = file.listFiles();
-//        if (fList != null) {
-//            for (File f : fList) {
-//                photos.add(f.getPath());
-//            }
-//        }
-//        return photos;
-//    }
-
     private ArrayList<String> findPhotos(Date startTimestamp, Date endTimestamp, String keywords) {
         File file = new File(Environment.getExternalStorageDirectory()
                 .getAbsolutePath(), "/Android/data/com.example.myfirstapp/files/Pictures");
         ArrayList<String> photos = new ArrayList<String>();
-        File[] fList = file.listFiles();
+        ArrayList<File> fList = new ArrayList<File>(Arrays.asList(Objects.requireNonNull(file.listFiles())));
         if (fList != null) {
-            for (File f : fList) {
+            // Using lambda java streams - functional programming
+            fList.forEach(f -> {
                 if (((startTimestamp == null && endTimestamp == null) || (f.lastModified() >= startTimestamp.getTime()
                         && f.lastModified() <= endTimestamp.getTime())
                 ) && (keywords == "" || f.getPath().contains(keywords)))
                     photos.add(f.getPath());
-            }
+            });
         }
         return photos;
     }
 
     public void scrollPhotos(View v) {
-        updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
+        mainActivityPresenter.updatePhoto(photos.get(index), ((EditText) findViewById(R.id.etCaption)).getText().toString());
         photos = findPhotos(new Date(Long.MIN_VALUE), new Date(), "");
         switch (v.getId()) {
             case R.id.btnPrev:
@@ -361,14 +334,4 @@ public class MainActivity extends AppCompatActivity {
             tv.setText(attr[2]);
         }
     }
-
-    private void updatePhoto(String path, String caption) {
-        String[] attr = path.split("_");
-        if (attr.length >= 3) {
-            File to = new File(attr[0] + "_" + caption + "_" + attr[2] + "_" + attr[3] + ".jpeg");
-            File from = new File(path);
-            from.renameTo(to);
-        }
-    }
-
 }
