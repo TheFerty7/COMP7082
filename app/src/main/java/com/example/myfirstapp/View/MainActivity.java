@@ -196,9 +196,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Aspect test method
     public Boolean checkCaption(){
         String cap = ((EditText)findViewById(R.id.etCaption)).getText().toString();
-        return true;
+        if(cap.isEmpty()){
+            return false;
+        }else{
+            return true;
+        }
     }
 
     public void searchPhoto(View view) {
